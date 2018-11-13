@@ -1,0 +1,92 @@
+apiVersion: chronicler.org/v1alpha1
+kind: Model
+metadata:
+  name: testmodel
+  labels:
+    version: 1
+spec:
+  hyperparameters:
+    - name: leraning_rate
+      value: 0.1
+  metrics:
+    primary:
+      name: accuracy
+      value: 0.92
+    secondary:
+      - name: precision
+        value: 0.82
+      - name: recall
+        value: 0.77
+  log_location: s3://somewhere_logs
+  model_location: s3://somewhere_model
+  initial_state:
+    model:
+      name: testmodelv0
+  dataset:
+    pachyderm:
+      repo_name: imagenet
+      commit: foobarcommit
+  code:
+    github:
+      repo: kubeflow/community
+      commit: 8a4fda57620a8cc3ad47e0d9b4d17ffec10bb622
+  training:
+    tfjob:
+      name: modelv1-train
+
+---
+apiVersion: chronicler.org/v1alpha1
+kind: Model
+metadata:
+  name: testmodelv0
+  labels:
+    version: 0
+spec:
+  hyperparameters:
+    - name: leraning_rate
+      value: 0.1
+  metrics:
+    primary:
+      name: accuracy
+      value: 0.91
+    secondary:
+      - name: precision
+        value: 0.81
+      - name: recall
+        value: 0.76
+  log_location: s3://somewhere_logs
+  model_location: s3://somewhere_model
+  initial_state:
+    random:
+      seed: 42
+  dataset:
+    s3:
+      url: s3://somebucket/somedir
+  code:
+    github:
+      repo: kubeflow/community
+      commit: 8a4fda57620a8cc3ad47e0d9b4d17ffec10bb622
+  training:
+    tfjob:
+      name: modelv1-train
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: inference-testmodel
+  labels:
+    model: testmodel
+    role: inference
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80

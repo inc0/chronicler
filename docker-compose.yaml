@@ -1,0 +1,32 @@
+# Docker compose for local dev. Goal is to simulate in-cluster pod behaviour. Good for developing operators.
+# To use, create "secrets" dir and move contents of /var/run/secrets/kubernetes.io/serviceaccount from one of running pods.
+# You also need to replace IPs from environmnet to your k8s api.
+
+
+---
+version: '3'
+services:
+  chronicler-api:
+    build: ./api
+    restart: always
+    command: "sleep 100000"
+    volumes:
+      - "./secrets:/var/run/secrets/kubernetes.io/serviceaccount"
+      - "./api:/chronicler"
+    environment:
+      - KUBERNETES_SERVICE_PORT=8443
+      - KUBERNETES_SERVICE_PORT_HTTPS=8443
+      - KUBERNETES_PORT=tcp://172.19.38.243:8443
+      - KUBERNETES_SERVICE_HOST=172.19.38.243
+    ports:
+      - "5000:5000"
+  chroincler-gui:
+    build: ./gui
+    restart: always
+    command: "sleep 100000"
+    volumes:
+      - "./gui:/usr/src/app"
+    ports:
+      - "3000:3000"
+    links:
+      - chronicler-api
